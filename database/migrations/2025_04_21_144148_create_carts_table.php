@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
-            $table->string('table_number')->nullable(); // số bàn
+            $table->foreignId('table_id')->constrained()->onDelete('cascade');
             $table->string('session_id')->nullable();   // phiên nếu chưa login
             $table->timestamps();
         });

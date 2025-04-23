@@ -15,6 +15,8 @@ use App\Repositories\Eloquent\CategoryRepository;
 use App\Repositories\Eloquent\CartItemRepository;
 use App\Repositories\Eloquent\OrderRepository;
 use App\Repositories\Eloquent\OrderItemRepository;
+use App\Repositories\Eloquent\TablesRepository;
+use App\Repositories\Interfaces\TablesRepositoryInterface;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CartItemRepositoryInterface::class, CartItemRepository::class);
         $this->app->bind(OrderRepositoryInterface::class, OrderRepository::class);
         $this->app->bind(OrderItemRepositoryInterface::class, OrderItemRepository::class);
+        $this->app->bind(TablesRepositoryInterface::class, TablesRepository::class);
     }
 
     /**

@@ -2,16 +2,16 @@
 
 namespace App\Repositories\Eloquent;
 
-use App\Models\Product;
-use App\Repositories\Interfaces\ProductRepositoryInterface;
+use App\Models\Tables;
+use App\Repositories\Interfaces\TablesRepositoryInterface;
 
-class ProductRepository implements ProductRepositoryInterface
+class TablesRepository implements TablesRepositoryInterface
 {
     protected $model;
 
-    public function __construct(Product $product)
+    public function __construct(Tables $tables)
     {
-        $this->model = $product;
+        $this->model = $tables;
     }
 
     public function all()
@@ -39,10 +39,5 @@ class ProductRepository implements ProductRepositoryInterface
     public function delete($id)
     {
         return $this->model->destroy($id);
-    }
-
-    public function search($key)
-    {
-        return $this->model->where('name', 'LIKE', '%' . $key . '%')->get();
     }
 }

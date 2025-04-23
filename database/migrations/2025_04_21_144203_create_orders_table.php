@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->string('table_number')->nullable(); // số bàn
+            $table->foreignId('table_id')->constrained()->onDelete('cascade');
             $table->enum('status', ['pending', 'serving', 'done'])->default('pending');
             $table->decimal('total_price', 10, 2)->default(0);
             $table->timestamps();

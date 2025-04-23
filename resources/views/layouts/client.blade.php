@@ -7,7 +7,7 @@
         @include('layouts.components.loading-spint')
         @include('layouts.components.header')
         <!-- Menu Start -->
-        <div class="container-xxl py-5">
+        <div class="container-xxl py-5" style="min-height: 600px">
             <div class="container">
                 @yield('content')
             </div>

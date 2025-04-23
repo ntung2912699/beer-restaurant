@@ -10,3 +10,10 @@ Route::prefix('auth')->group(function () {
     Route::get('google/redirect', [GoogleAuthController::class, 'redirectToGoogle']);
     Route::get('google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
 });
+
+Route::prefix('api')->group(function () {
+    Route::get('products-by-category', [IndexController::class, 'getProductsByCategory']);
+    Route::get('products-search', [IndexController::class, 'searchProducts']);
+    Route::get('tables-all', [IndexController::class, 'getAllTables']);
+});
+
