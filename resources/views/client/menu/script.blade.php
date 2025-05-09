@@ -108,6 +108,18 @@
                     });
 
                     saveCartToLocalStorage(cart);
+                    if (cart.length === 0) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Thông báo',
+                            text: `Bàn ${tableIdInit} chưa có đơn`,
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 1500,
+                            timerProgressBar: true
+                        });
+                    }
                     updateCartUI();
                 },
                 error: function (tableIdInit) {
