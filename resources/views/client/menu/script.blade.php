@@ -1,4 +1,5 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     function showLoading(flag) {
         $('#loading-icon').attr('hidden', !flag);
@@ -41,19 +42,17 @@
                         $.each(response, function(index, product) {
                             productHtml += `
                                 <div class="col-lg-6">
-                                    <a href="#">
-                                        <div class="d-flex align-items-center">
-                                            <img class="flex-shrink-0 img-fluid rounded" src="${product.image}" alt="" style="width: 80px;">
-                                            <div class="w-100 d-flex flex-column text-start ps-4">
-                                                <h5 class="d-flex justify-content-between border-bottom pb-2">
-                                                    <span>${product.name}</span>
-                                                    <span class="text-primary">${formatVND(product.price)}</span>
-                                                </h5>
-                                                <i class="fa fa-plus-square text-success" style="cursor: pointer;"
-                                                onclick="addToCart(${product.id}, '${product.name}', ${product.price}, '${product.image}')"></i>
-                                            </div>
+                                    <div class="d-flex align-items-center">
+                                        <img class="flex-shrink-0 img-fluid rounded" src="${product.image}" alt="" style="width: 80px;">
+                                        <div class="w-100 d-flex flex-column text-start ps-4">
+                                            <h5 class="d-flex justify-content-between border-bottom pb-2">
+                                                <span>${product.name}</span>
+                                                <span class="text-primary">${formatVND(product.price)}</span>
+                                            </h5>
+                                            <i class="fa fa-plus-square text-success" style="cursor: pointer;"
+                                            onclick="addToCart(${product.id}, '${product.name}', ${product.price}, '${product.image}')"></i>
                                         </div>
-                                    </a>
+                                    </div>
                                 </div>
                             `;
                         });
@@ -63,104 +62,262 @@
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.log("Error: " + error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: error,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
                     showLoading(false);
                 }
             });
         }
+    });
 
+    let currentCartId = null;
 
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
+
+    $(document).ready(function () {
+        updateCartUI();
+
+        const tableIdInit = $('.form-select').val();
         $.ajax({
-        url: '/api/tables-all',
-        method: 'GET',
-        data: {},
-        success: function(response) {
-            if (response && response.length > 0) {
-                var tableHtml = '';
-                
-                $.each(response, function(index, table) {
-                // Tạo HTML cho từng bàn
-                tableHtml += `
-                    <li class="nav-item">
-                        <a class="d-flex align-items-center text-start mx-3 ms-0 pb-3 tab-link" 
-                            id="tab-active-${index}" 
-                            data-bs-toggle="pill" 
-                            href="#tab-${index}" 
-                            data-category-id="${table.id}">
-                            <i class="fa fa-table"></i>
-                            <div class="ps-3">
-                                <small class="text-body">Bàn</small>
-                                <h6 class="mt-n1 mb-0">${table.name}</h6>
-                            </div>
-                        </a>
-                    </li>
-                `;
+                url: `/api/cart/${tableIdInit}`,
+                method: 'GET',
+                success: function (data) {
+                    const cart = [];
+                    currentCartId = data.cart_id;
+
+                    data.items.forEach(item => {
+                        cart.push({
+                            id: item.product.id,
+                            name: item.product.name,
+                            price: item.product.price,
+                            image: item.product.image,
+                            quantity: item.quantity
+                        });
+                    });
+
+                    saveCartToLocalStorage(cart);
+                    updateCartUI();
+                },
+                error: function (tableIdInit) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: `Không thể tải giỏ hàng bàn ${tableIdInit}.`,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                }
             });
 
-            // Cập nhật nội dung của #table-tab-content
-            $('#table-tab-content').html(tableHtml);
-                showLoading(false);
+        // Khi chọn bàn
+        $('.form-select').on('change', function () {
+            const tableId = $(this).val();
+
+            $.ajax({
+                url: `/api/cart/${tableId}`,
+                method: 'GET',
+                success: function (data) {
+                    const cart = [];
+                    currentCartId = data.cart_id;
+
+                    data.items.forEach(item => {
+                        cart.push({
+                            id: item.product.id,
+                            name: item.product.name,
+                            price: item.product.price,
+                            image: item.product.image,
+                            quantity: item.quantity
+                        });
+                    });
+
+                    saveCartToLocalStorage(cart);
+                    updateCartUI();
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: `Không thể tải giỏ hàng bàn ${tableId}.`,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                }
+            });
+        });
+
+        let previousTableId = $('.form-select').val(); // lấy bàn đang được chọn ban đầu
+
+        $('.form-select').on('change', function () {
+            const newTableId = $(this).val(); // bàn mới
+            const cart = getCartFromLocalStorage();
+
+            if (cart.length > 0 && previousTableId) {
+                const payload = {
+                    table_id: previousTableId,
+                    items: cart.map(item => ({
+                        id: item.id, // hoặc product_id, tùy backend bạn validate
+                        quantity: item.quantity
+                    }))
+                };
+
+                const url = currentCartId ? `/api/cart/${currentCartId}` : '/api/cart';
+                const method = currentCartId ? 'PUT' : 'POST';
+
+                $.ajax({
+                    url: url,
+                    method: method,
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: async function (response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Đã lưu!',
+                            text: `Giỏ hàng bàn ${previousTableId} đã được lưu.`,
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 1500,
+                            timerProgressBar: true
+                        });
+
+                        currentCartId = response.cart_id;
+                        localStorage.removeItem('cart');
+
+                        // Lấy giỏ hàng mới
+                        await fetchCartByTableId(newTableId);
+                        previousTableId = newTableId;
+                    },
+                    error: function () {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            text: `Lỗi khi lưu giỏ hàng bàn ${previousTableId}.`,
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 1500,
+                            timerProgressBar: true
+                        });
+                    }
+                });
+            } else {
+                // Nếu không có cart thì chỉ đổi bàn thôi
+                fetchCartByTableId(newTableId);
+                previousTableId = newTableId;
             }
-        },
-        error: function(xhr, status, error) {
-            console.log("Error: " + error);
-            showLoading(false);
+        });
+
+        function fetchCartByTableId(tableId) {
+            $.ajax({
+                url: `/api/cart/${tableId}`,
+                method: 'GET',
+                success: function (data) {
+                    const cart = [];
+
+                    currentCartId = data.cart_id;
+
+                    data.items.forEach(item => {
+                        cart.push({
+                            id: item.product.id,
+                            name: item.product.name,
+                            price: item.product.price,
+                            image: item.product.image,
+                            quantity: item.quantity
+                        });
+                    });
+
+                    saveCartToLocalStorage(cart);
+                    if (cart.length === 0) {
+                        setTimeout(() => {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Thông báo',
+                                text: `Bàn ${tableId} chưa có đơn`,
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true
+                            });
+                        }, 200);
+                    }
+                    updateCartUI();
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: `Không thể tải giỏ hàng bàn ${tableId}.`,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                }
+            });
         }
-    });
-    });
 
-// Thêm sản phẩm vào giỏ
-function addToCart(id, name, price, image) {
-    let cart = getCartFromLocalStorage();
-    let productExists = false;
-
-    // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa
-    cart.forEach(item => {
-        if (item.id === id) {
-            item.quantity += 1; // Nếu có thì tăng số lượng
-            productExists = true;
-        }
     });
 
-    // Nếu sản phẩm chưa có trong giỏ, thêm mới
-    if (!productExists) {
-        const newProduct = {
-            id: id,
-            name: name,
-            price: price,
-            image: image,
-            quantity: 1
-        };
-        cart.push(newProduct);
-    }
+    // =================== Cart localStorage functions ===================
 
-        saveCartToLocalStorage(cart);
-        updateCartUI();
-    }
-
-    // Lấy giỏ hàng từ localStorage
     function getCartFromLocalStorage() {
         const cart = localStorage.getItem('cart');
         return cart ? JSON.parse(cart) : [];
     }
 
-    // Lưu giỏ hàng vào localStorage
     function saveCartToLocalStorage(cart) {
         localStorage.setItem('cart', JSON.stringify(cart));
     }
 
-    // Cập nhật giao diện giỏ hàng
+    function addToCart(id, name, price, image) {
+        let cart = getCartFromLocalStorage();
+        let exists = false;
+
+        cart.forEach(item => {
+            if (item.id === id) {
+                item.quantity += 1;
+                exists = true;
+            }
+        });
+
+        if (!exists) {
+            cart.push({ id, name, price, image, quantity: 1 });
+        }
+
+        saveCartToLocalStorage(cart);
+        updateCartUI();
+    }
+
     function updateCartUI() {
         const cart = getCartFromLocalStorage();
-        const cartItemsContainer = document.getElementById('cart-items');
-        const cartTotal = document.getElementById('cart-total');
-        cartItemsContainer.innerHTML = '';
+        const cartItemsContainer = $('#cart-items');
+        const cartTotal = $('#cart-total');
+        cartItemsContainer.html('');
         let totalAmount = 0;
 
-        // Hiển thị các sản phẩm trong giỏ
         cart.forEach(item => {
             totalAmount += item.price * item.quantity;
-            cartItemsContainer.innerHTML += `
+            cartItemsContainer.append(`
                 <div class="cart-item d-flex justify-content-between align-items-center mb-3">
                     <div class="d-flex align-items-center">
                         <img class="img-fluid rounded" src="${item.image}" alt="${item.name}" style="width: 50px;">
@@ -173,27 +330,24 @@ function addToCart(id, name, price, image) {
                         <button class="btn btn-sm btn-danger ms-2" onclick="removeFromCart(${item.id})">X</button>
                     </div>
                 </div>
-            `;
+            `);
         });
 
-        // Cập nhật tổng số tiền
-        cartTotal.textContent = formatVND(totalAmount);
+        cartTotal.text(formatVND(totalAmount));
     }
 
-    // Cập nhật số lượng sản phẩm trong giỏ
     function updateQuantity(id, change) {
         let cart = getCartFromLocalStorage();
         cart.forEach(item => {
             if (item.id === id) {
                 item.quantity += change;
-                if (item.quantity <= 0) item.quantity = 1; // Không giảm dưới 1
+                if (item.quantity < 1) item.quantity = 1;
             }
         });
         saveCartToLocalStorage(cart);
         updateCartUI();
     }
 
-    // Xóa sản phẩm khỏi giỏ
     function removeFromCart(id) {
         let cart = getCartFromLocalStorage();
         cart = cart.filter(item => item.id !== id);
@@ -201,23 +355,98 @@ function addToCart(id, name, price, image) {
         updateCartUI();
     }
 
-    // Thanh toán giỏ hàng
-    document.getElementById('checkout-btn').addEventListener('click', function () {
-        const cart = getCartFromLocalStorage();
-        if (cart.length === 0) {
-            alert('Giỏ hàng của bạn trống! Hãy thêm sản phẩm vào giỏ.');
+    $('#checkout-btn').on('click', function () {
+        const tableId = $('.form-select').val();
+
+        // Kiểm tra bàn đã chọn
+        if (!tableId) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Chưa chọn bàn!',
+                text: 'Vui lòng chọn bàn để thanh toán.'
+            });
             return;
         }
 
-        // Xử lý thanh toán ở đây
-        alert('Thanh toán thành công!');
-        localStorage.removeItem('cart'); // Xóa giỏ hàng sau khi thanh toán
-        updateCartUI(); // Cập nhật lại giao diện giỏ hàng
-    });
+        // Lấy giỏ hàng từ localStorage
+        const cart = getCartFromLocalStorage();
 
-    // Khởi tạo khi tải trang
-    document.addEventListener('DOMContentLoaded', function () {
-        updateCartUI(); // Cập nhật giao diện giỏ hàng khi trang được tải
+        // Kiểm tra giỏ hàng có sản phẩm không
+        if (cart.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Giỏ hàng trống!',
+                text: 'Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán.'
+            });
+            return;
+        }
+
+        // Chuẩn bị payload gửi lên server
+        const payload = {
+            table_id: tableId,
+            items: cart.map(item => ({
+                id: item.id, // Giữ id cho mỗi sản phẩm
+                quantity: item.quantity
+            }))
+        };
+
+        // Gửi dữ liệu lên API
+        $.ajax({
+            url: '/api/orders',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function (response) {
+                // Xóa giỏ hàng localStorage sau khi thanh toán
+                localStorage.removeItem('cart');
+                updateCartUI();  // Cập nhật lại giao diện giỏ hàng
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thanh toán hoàn tất!',
+                    text: `Mã đơn hàng: #${response.order_id}`,
+                    confirmButtonText: 'In hóa đơn',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Gọi API để lấy HTML hóa đơn và in
+                        $.ajax({
+                            url: `/orders/print-content/${response.order_id}`,
+                            method: 'GET',
+                            success: function (html) {
+                                const printWindow = window.open('', '', 'width=600,height=800');
+                                printWindow.document.write(html);
+                                printWindow.document.close();
+
+                                // Đợi ảnh QR (hoặc toàn bộ DOM) load xong rồi mới in
+                                printWindow.onload = function () {
+                                    const qrImg = printWindow.document.querySelector('img#qr-image');
+                                    if (qrImg && !qrImg.complete) {
+                                        qrImg.onload = function () {
+                                            printWindow.focus();
+                                            printWindow.print();
+                                            printWindow.close();
+                                        };
+                                    } else {
+                                        printWindow.focus();
+                                        printWindow.print();
+                                        printWindow.close();
+                                    }
+                                };
+                            },
+                            error: function () {
+                                Swal.fire('Lỗi', 'Không thể tạo hóa đơn để in.', 'error');
+                            }
+                        });
+                    }
+                });
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi!',
+                    text: xhr.responseJSON?.message || 'Không thể tạo đơn hàng, vui lòng thử lại.'
+                });
+            }
+        });
     });
 
 </script>

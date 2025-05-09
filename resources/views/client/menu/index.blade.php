@@ -1,12 +1,6 @@
 @extends('layouts.client')
 
 @section('content')
-    <div class="col-12">
-        <div class="tab-class text-center wow fadeInUp" data-wow-delay="0.1s">
-            <ul class="nav nav-pills d-inline-flex justify-content-center border-bottom mb-5" id="table-tab-content">
-            </ul>
-        </div>
-    </div>
     <div class="row">
         <div class="col-8">
             <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
@@ -39,7 +33,14 @@
         </div>
         <div class="col-4">
             <div class="cart-container bg-light p-3 rounded shadow-sm">
-                <h5 class="text-center text-primary mb-3"><i class="fa fa-shopping-cart me-2"></i>Giỏ hàng</h5>
+                {{-- <h5 class="text-center text-primary mb-3"><i class="fa fa-shopping-cart me-2"></i>Giỏ hàng</h5> --}}
+                <div class="col-6 offset-3 pb-3">
+                    <select class="form-select" aria-label="Default select example" data-table-old="{{ $tablesList[0]->id }}">
+                        @foreach($tablesList as $table)
+                        <option value="{{ $table->id }}">Bàn : {{ $table->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <div id="cart-items" class="mb-3" style="max-height: 400px; overflow-y: auto;">
                     
                 </div>
