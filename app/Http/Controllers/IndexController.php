@@ -37,12 +37,12 @@ class IndexController extends Controller
     public function index() {
         try {
             $categoryAll = $this->categoryRepo->all();
-            $tablesList = $this->tableRepo->all(); 
+            $tablesList = $this->tableRepo->all();
             return view('client.menu.index', compact('categoryAll','tablesList'));
         }
         catch (Exception $e) {
             Log::error('Lỗi mở màn hình chính: ' . $e->getMessage());
-            return response()->json('Đã xảy ra lỗi hệ thống', 200);
+            return view('client.error.not-found');
         }
     }
 
@@ -90,89 +90,104 @@ class IndexController extends Controller
         Log::error('Lỗi lấy khi lấy danh sách bàn: ' . $e->getMessage());
         return response()->json(['message' => 'Đã xảy ra lỗi khi lấy danh sách bàn'], 500);
       }
-    } 
+    }
 
     public function getCartByTable($tableId)
     {
-        $cart = Cart::with('items.product')
-            ->where('table_id', $tableId)
-            ->latest()
-            ->first();
+        try {
+            $cart = Cart::with('items.product')
+                ->where('table_id', $tableId)
+                ->latest()
+                ->first();
 
-        if (!$cart) {
+            if (!$cart) {
+                return response()->json([
+                    'items' => [],
+                    'total' => '0₫'
+                ]);
+            }
+
+            $total = $cart->items->sum(function ($item) {
+                return $item->quantity * $item->product->price;
+            });
+
             return response()->json([
-                'items' => [],
-                'total' => '0₫'
+                'cart_id' => $cart->id,
+                'items' => $cart->items,
+                'total' => number_format($total, 0, ',', '.') . '₫'
             ]);
+        } catch (Exception $e) {
+            Log::error('Lỗi lấy khi lấy hóa đơn bàn: ' . $e->getMessage());
+            return response()->json(['message' => 'Đã xảy ra lỗi khi lấy hóa đơn bàn'], 500);
         }
-
-        $total = $cart->items->sum(function ($item) {
-            return $item->quantity * $item->product->price;
-        });
-
-        return response()->json([
-            'cart_id' => $cart->id,
-            'items' => $cart->items,
-            'total' => number_format($total, 0, ',', '.') . '₫'
-        ]);
     }
 
     public function saveCart(Request $request)
     {
-        $request->validate([
-            'table_id' => 'required|integer',
-            'items' => 'required|array',
-            'items.*.id' => 'required|integer',
-            'items.*.quantity' => 'required|integer|min:1',
-        ]);
-
-        $existingCart = Cart::where('table_id', $request->table_id)->latest()->first();
-        if ($existingCart) {
-            $existingCart->items()->delete();
-            $existingCart->delete();
-        }
-
-        $cart = Cart::create([
-            'table_id' => $request->table_id,
-        ]);
-
-        foreach ($request->items as $item) {
-            $cart->items()->create([
-                'product_id' => $item['id'],
-                'quantity'   => $item['quantity'],
+        try {
+            $request->validate([
+                'table_id' => 'required|integer',
+                'items' => 'required|array',
+                'items.*.id' => 'required|integer',
+                'items.*.quantity' => 'required|integer|min:1',
             ]);
-        }
 
-        return response()->json(['message' => 'Đã lưu giỏ hàng thành công.']);
+            $existingCart = Cart::where('table_id', $request->table_id)->latest()->first();
+            if ($existingCart) {
+                $existingCart->items()->delete();
+                $existingCart->delete();
+            }
+
+            $cart = Cart::create([
+                'table_id' => $request->table_id,
+            ]);
+
+            foreach ($request->items as $item) {
+                $cart->items()->create([
+                    'product_id' => $item['id'],
+                    'quantity'   => $item['quantity'],
+                ]);
+            }
+
+            return response()->json(['message' => 'Đã lưu giỏ hàng thành công.']);
+        } catch (Exception $e) {
+            Log::error('Lỗi khi lưu giỏ hàng: ' . $e->getMessage());
+            return response()->json(['message' => 'Đã xảy ra lỗi khi lưu giỏ hàng'], 500);
+        }
     }
 
     public function updateCart(Request $request, Cart $cart)
     {
-        $request->validate([
-            'table_id' => 'required|integer',
-            'items' => 'required|array|min:1',
-            'items.*.id' => 'required|integer|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-        ]);
-
-        // Cập nhật table_id nếu cần
-        $cart->update(['table_id' => $request->table_id]);
-
-        // Xóa item cũ
-        $cart->items()->delete();
-
-        // Tạo item mới
-        foreach ($request->items as $item) {
-            $cart->items()->create([
-                'product_id' => $item['id'],
-                'quantity' => $item['quantity'],
+        try {
+            $request->validate([
+                'table_id' => 'required|integer',
+                'items' => 'required|array|min:1',
+                'items.*.id' => 'required|integer|exists:products,id',
+                'items.*.quantity' => 'required|integer|min:1',
             ]);
-        }
 
-        return response()->json([
-            'message' => 'Cart updated successfully.',
-            'cart_id' => $cart->id
-        ]);
+            // Cập nhật table_id nếu cần
+            $cart->update(['table_id' => $request->table_id]);
+
+            // Xóa item cũ
+            $cart->items()->delete();
+
+            // Tạo item mới
+            foreach ($request->items as $item) {
+                $cart->items()->create([
+                    'product_id' => $item['id'],
+                    'quantity' => $item['quantity'],
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'Cart updated successfully.',
+                'cart_id' => $cart->id
+            ]);
+        } catch (Exception $e) {
+            Log::error('Lỗi khi cập nhật giỏ hàng: ' . $e->getMessage());
+            return response()->json(['message' => 'Đã xảy ra lỗi khi cập nhật giỏ hàng'], 500);
+        }
     }
 
     public function orderStore(Request $request)
@@ -230,14 +245,19 @@ class IndexController extends Controller
 
     public function cartDestroy($tableId)
     {
-        $cart = Cart::where('table_id', $tableId)->latest()->first();
-    
-        if ($cart) {
-            $cart->items()->delete();
-            $cart->delete();
+        try {
+            $cart = Cart::where('table_id', $tableId)->latest()->first();
+
+            if ($cart) {
+                $cart->items()->delete();
+                $cart->delete();
+            }
+
+            return response()->json(['message' => 'Xóa giỏ hàng thành công.']);
+        }  catch (Exception $e) {
+            Log::error('Lỗi khi xóa giỏ hàng: ' . $e->getMessage());
+            return response()->json(['message' => 'Đã xảy ra lỗi khi xóa giỏ hàng'], 500);
         }
-    
-        return response()->json(['message' => 'Cart deleted.']);
     }
 
     public function printContent($id)
