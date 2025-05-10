@@ -40,5 +40,12 @@ class OrderRepository implements OrderRepositoryInterface
     {
         return $this->model->destroy($id);
     }
+
+    public function getOrdersInRange($start, $end)
+    {
+        return Order::whereBetween('created_at', [$start, $end])
+            ->orderByDesc('created_at')
+            ->get();
+    }
 }
 

@@ -39,8 +39,7 @@ class IndexController extends Controller
             $categoryAll = $this->categoryRepo->all();
             $tablesList = $this->tableRepo->all();
             return view('client.menu.index', compact('categoryAll','tablesList'));
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Log::error('Lỗi mở màn hình chính: ' . $e->getMessage());
             return view('client.error.not-found');
         }
@@ -60,6 +59,11 @@ class IndexController extends Controller
             }
 
             $products = $category->products()->get();
+
+            if ($products->isEmpty()) {
+                return response()->json(['message' => 'Không có sản phẩm trong danh mục'], 404);
+            }
+
             return response()->json($products, 200);
         } catch (\Exception $e) {
             Log::error('Lỗi lấy sản phẩm theo danh mục: ' . $e->getMessage());

@@ -1,5 +1,5 @@
 <!-- Navbar & Hero Start -->
-<div class="container-xxl position-relative p-0">
+<div class="position-relative p-0">
             <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 px-lg-5 py-3 py-lg-0">
                 <a href="" class="navbar-brand p-0">
                     <h1 class="text-primary m-0"><i class="fa fa-utensils me-3"></i>Restoran</h1>
@@ -13,8 +13,8 @@
                         {{-- <a href="index.html" class="nav-item nav-link">Home</a>
                         <a href="about.html" class="nav-item nav-link">About</a>
                         <a href="service.html" class="nav-item nav-link">Service</a> --}}
-                        <a href="menu.html" class="nav-item nav-link active">Menu</a>
-                        <a href="menu.html" class="nav-item nav-link active">Trang Quản Lý</a>
+                        <a href="{{ route('menu') }}" class="nav-item nav-link active">Menu</a>
+                        <a href="{{ route('admin.dashboard') }}" class="nav-item nav-link active">Trang Quản Lý</a>
                         {{-- <div class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
                             <div class="dropdown-menu m-0">
@@ -29,7 +29,7 @@
                 </div>
             </nav>
 
-            <div class="container-xxl py-5 bg-dark hero-header mb-5">
+            <div class="py-5 bg-dark hero-header mb-5">
                 {{-- <div class="container text-center my-5 pt-5 pb-4">
                     <h1 class="display-3 text-white mb-3 animated slideInDown">Food Menu</h1>
                     <nav aria-label="breadcrumb">
