@@ -10,22 +10,17 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarCollapse">
                     <div class="navbar-nav ms-auto py-0 pe-4">
-                        {{-- <a href="index.html" class="nav-item nav-link">Home</a>
-                        <a href="about.html" class="nav-item nav-link">About</a>
-                        <a href="service.html" class="nav-item nav-link">Service</a> --}}
                         <a href="{{ route('menu') }}" class="nav-item nav-link active">Menu</a>
                         <a href="{{ route('admin.dashboard') }}" class="nav-item nav-link active">Trang Quản Lý</a>
-                        {{-- <div class="nav-item dropdown">
-                            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
-                            <div class="dropdown-menu m-0">
-                                <a href="booking.html" class="dropdown-item">Booking</a>
-                                <a href="team.html" class="dropdown-item">Our Team</a>
-                                <a href="testimonial.html" class="dropdown-item">Testimonial</a>
-                            </div>
-                        </div>
-                        <a href="contact.html" class="nav-item nav-link">Contact</a> --}}
                     </div>
+                    @if(auth()->user())
+                        <a class="nav-item nav-link active">
+                            {{ auth()->user()->name }}
+                            <i id="logoutBtn" class="fas fa-sign-out-alt"></i>
+                        </a>
+                    @else
                     <a href="" class="btn btn-primary py-2 px-4">Đăng Nhập</a>
+                    @endif
                 </div>
             </nav>
 
@@ -43,3 +38,67 @@
             </div>
         </div>
         <!-- Navbar & Hero End -->
+
+<script>
+    $(document).ready(function() {
+        $('#logoutBtn').click(function() {
+            Swal.fire({
+                title: 'Bạn có chắc chắn muốn đăng xuất?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Đăng xuất',
+                cancelButtonText: 'Hủy',
+                reverseButtons: true,
+                toast: true,
+                position: 'top-end',
+                // timer: 1500,
+                // timerProgressBar: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const token = localStorage.getItem('access_token');
+
+                    if (!token) {
+                        window.location.href = '{{ route("login") }}';
+                        return;
+                    }
+
+                    $.ajax({
+                        url: '{{ route("logout") }}',
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            localStorage.removeItem('access_token');
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Đăng xuất thành công!',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true
+                            }).then(function() {
+                                window.location.href = '{{ route("login") }}';
+                            });
+                        },
+                        error: function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Đăng xuất thất bại!',
+                                text: 'Vui lòng thử lại.',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true
+                            });
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>

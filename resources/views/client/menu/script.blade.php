@@ -1,6 +1,15 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    token = localStorage.getItem('access_token');
+
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+        }
+    });
+
     function showLoading(flag) {
         $('#loading-icon').attr('hidden', !flag);
     }
@@ -35,10 +44,13 @@
                 data: {
                     categoryId: categoryId
                 },
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
                 success: function(response) {
                     if (response && response.length > 0) {
                         var productHtml = '';
-                        
+
                         $.each(response, function(index, product) {
                             productHtml += `
                                 <div class="col-lg-6">
@@ -80,12 +92,6 @@
 
     let currentCartId = null;
 
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-
     $(document).ready(function () {
         updateCartUI();
 
@@ -93,6 +99,9 @@
         $.ajax({
                 url: `/api/cart/${tableIdInit}`,
                 method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
                 success: function (data) {
                     const cart = [];
                     currentCartId = data.cart_id;
@@ -143,6 +152,9 @@
             $.ajax({
                 url: `/api/cart/${tableId}`,
                 method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
                 success: function (data) {
                     const cart = [];
                     currentCartId = data.cart_id;
@@ -198,6 +210,9 @@
                     method: method,
                     contentType: 'application/json',
                     data: JSON.stringify(payload),
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    },
                     success: async function (response) {
                         Swal.fire({
                             icon: 'success',
@@ -241,6 +256,9 @@
             $.ajax({
                 url: `/api/cart/${tableId}`,
                 method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
                 success: function (data) {
                     const cart = [];
 
@@ -408,6 +426,9 @@
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(payload),
+            headers: {
+                'Authorization': 'Bearer ' + token
+            },
             success: function (response) {
                 // Xóa giỏ hàng localStorage sau khi thanh toán
                 localStorage.removeItem('cart');
@@ -423,6 +444,9 @@
                         $.ajax({
                             url: `/orders/print-content/${response.order_id}`,
                             method: 'GET',
+                            headers: {
+                                'Authorization': 'Bearer ' + token
+                            },
                             success: function (html) {
                                 const printWindow = window.open('', '', 'width=600,height=800');
                                 printWindow.document.write(html);

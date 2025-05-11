@@ -1,0 +1,102 @@
+/* Đặt font và màu nền mặc định cho toàn trang */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Định dạng cho form đăng nhập */
+.card {
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background-color: #007bff;
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+.form-label {
+    font-weight: 600;
+}
+
+/* Định dạng các input trong form */
+input.form-control {
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+input.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+}
+
+button {
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Hiệu ứng hover cho nút đăng nhập */
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Thông báo lỗi */
+#alert {
+    display: none;
+    margin-bottom: 15px;
+    font-size: 0.875rem;
+}
+
+/* Tạo hiệu ứng cho form đăng nhập */
+.card {
+    transform: scale(0.95);
+    opacity: 0;
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* Hiệu ứng cho form khi xuất hiện */
+@keyframes fadeInUp {
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Điều chỉnh kiểu cho các nút, link, văn bản */
+a {
+    text-decoration: none;
+    color: #007bff;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Cải thiện thiết kế trên màn hình nhỏ */
+@media (max-width: 576px) {
+    .card {
+        width: 100%;
+        margin: 10px;
+    }
+
+    .card-header {
+        font-size: 1.25rem;
+    }
+}
