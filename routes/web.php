@@ -10,13 +10,13 @@ Route::prefix('auth')->group(function () {
     Route::get('/login', [AuthController::class, 'indexLogin'])->name('login');
     Route::get('/register', [AuthController::class, 'indexRegister'])->name('register');
     Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout'])->name('logout');
-    Route::prefix('api')->group(function () {
-        Route::get('google/redirect', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
-        Route::get('google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
-        Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
-        Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
-    });
 });
+Route::prefix('api')->group(function () {
+    Route::get('google/redirect', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
+    Route::get('google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
+    Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+    Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+})->middleware('api');
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/', [IndexController::class, 'index'])->name('menu');
 
@@ -35,6 +35,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('admin')->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+        Route::get('order', [\App\Http\Controllers\Admin\OrderManagementController::class, 'index'])->name('admin.orders');
     });
+
+    Route::prefix('api')->group(function () {
+        Route::get('/orders/{id}', [\App\Http\Controllers\Admin\OrderManagementController::class, 'show'])->name('order.show');
+        Route::put('/orders/{id}', [\App\Http\Controllers\Admin\OrderManagementController::class, 'update'])->name('order.update');       // Cập nhật đơn hàng
+        Route::delete('/orders/{id}', [\App\Http\Controllers\Admin\OrderManagementController::class, 'destroy'])->name('order.destroy');
+    });
+
+
 });
 

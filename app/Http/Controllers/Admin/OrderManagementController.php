@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
+use App\Models\Product;
+use App\Repositories\Eloquent\ProductRepository;
 use App\Repositories\Interfaces\OrderRepositoryInterface;
 use App\Repositories\Interfaces\OrderItemRepositoryInterface;
 use Illuminate\Http\Request;
@@ -12,82 +15,77 @@ class OrderManagementController extends Controller
 {
     protected $orderRepo;
     protected $orderItemRepo;
+    protected $productRepo;
 
-    public function __construct(OrderRepositoryInterface $orderRepo, OrderItemRepositoryInterface $orderItemRepo)
+    public function __construct(
+        OrderRepositoryInterface $orderRepo,
+        OrderItemRepositoryInterface $orderItemRepo,
+        ProductRepository  $productRepo)
     {
         $this->orderRepo = $orderRepo;
         $this->orderItemRepo = $orderItemRepo;
+        $this->productRepo = $productRepo;
     }
 
     // Hiển thị danh sách đơn hàng
     public function index(Request $request)
     {
         $orders = $this->orderRepo->all();
-        return response()->json($orders);
+        $products = $this->productRepo->all();
+        return view('admin.page.order.index', compact('orders', 'products'));
     }
 
-    // Thống kê doanh thu theo ngày
-    public function statisticByDate(Request $request, $date = null)
+    public function show($id)
     {
-        $date = $date ?: Carbon::today()->format('Y-m-d');
-        $orders = $this->orderRepo->all()->where('created_at', 'like', "%$date%");
+        $order = Order::with(['items.product'])->findOrFail($id);
 
-        $totalRevenue = $orders->sum('total_price');
-        return response()->json([
-            'date' => $date,
-            'total_revenue' => $totalRevenue
-        ]);
+        $data = [
+            'id' => $order->id,
+            'table_id' => $order->table_id,
+            'status' => $order->status,
+            'items' => $order->items->map(function ($item) {
+                return [
+                    'product_id' => $item->product_id,
+                    'product_name' => $item->product->name,
+                    'quantity' => $item->quantity,
+                ];
+            }),
+        ];
+
+        return response()->json($data);
     }
 
-    // Thống kê doanh thu theo tuần
-    public function statisticByWeek(Request $request)
+    public function update(Request $request, $id)
     {
-        $weekStart = Carbon::now()->startOfWeek()->format('Y-m-d');
-        $weekEnd = Carbon::now()->endOfWeek()->format('Y-m-d');
-        $orders = $this->orderRepo->all()->whereBetween('created_at', [$weekStart, $weekEnd]);
+        $order = Order::with('items')->findOrFail($id);
+        $quantities = $request->input('quantities', []);
 
-        $totalRevenue = $orders->sum('total_price');
-        return response()->json([
-            'week_start' => $weekStart,
-            'week_end' => $weekEnd,
-            'total_revenue' => $totalRevenue
-        ]);
+        // Xóa toàn bộ món cũ
+        $order->items()->delete();
+
+        $total = 0;
+        foreach ($quantities as $productId => $qty) {
+            $product = Product::findOrFail($productId);
+            $order->items()->create([
+                'product_id' => $productId,
+                'quantity' => $qty,
+                'unit_price' => $product->price,
+            ]);
+            $total += $product->price * $qty;
+        }
+
+        $order->total_price = $total;
+        $order->save();
+
+        return response()->json(['message' => 'Cập nhật thành công']);
     }
 
-    // Thống kê doanh thu theo tháng
-    public function statisticByMonth(Request $request)
+    public function destroy($id)
     {
-        $monthStart = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $monthEnd = Carbon::now()->endOfMonth()->format('Y-m-d');
-        $orders = $this->orderRepo->all()->whereBetween('created_at', [$monthStart, $monthEnd]);
+        $order = Order::findOrFail($id);
+        $order->items()->delete(); // xóa các item trước
+        $order->delete();
 
-        $totalRevenue = $orders->sum('total_price');
-        return response()->json([
-            'month_start' => $monthStart,
-            'month_end' => $monthEnd,
-            'total_revenue' => $totalRevenue
-        ]);
-    }
-
-    // Báo cáo lợi nhuận
-    public function profitReport(Request $request)
-    {
-        $totalRevenue = $this->orderRepo->all()->sum('total_price');
-        $totalCost = $this->calculateTotalCost(); // Hàm tính chi phí
-        $profit = $totalRevenue - $totalCost;
-
-        return response()->json([
-            'total_revenue' => $totalRevenue,
-            'total_cost' => $totalCost,
-            'profit' => $profit
-        ]);
-    }
-
-    // Tính tổng chi phí, có thể tính theo công thức hoặc nhập từ dữ liệu
-    private function calculateTotalCost()
-    {
-        // Ví dụ tính chi phí theo các yếu tố như vật tư, sản xuất, nhân công...
-        // Chưa có mô hình chi phí cụ thể, nên trả về 0 cho ví dụ.
-        return 0; // Sẽ được thay đổi nếu có bảng chi phí
+        return response()->json(['message' => 'Đã xóa đơn hàng']);
     }
 }
