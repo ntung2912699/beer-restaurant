@@ -32,7 +32,7 @@
         </div>
     </div>
 
-    <h2 class="h5 mt-5">Danh sách đơn hàng gần đây</h2>
+    <h2 class="h5 mt-5">Danh sách đơn hàng hôm nay</h2>
     <div class="table-responsive">
         <table class="table table-bordered table-hover align-middle mt-3">
             <thead class="table-light">

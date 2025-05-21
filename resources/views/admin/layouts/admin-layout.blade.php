@@ -36,11 +36,8 @@
         <div class="list-group list-group-flush mt-4">
             <a href="{{ route('admin.dashboard') }}" class="list-group-item list-group-item-action bg-dark text-white">Dashboard</a>
             <a href="{{ route('admin.orders') }}" class="list-group-item list-group-item-action bg-dark text-white">Orders</a>
-{{--            <a href="{{ route('admin.products') }}" class="list-group-item list-group-item-action bg-dark text-white">Products</a>--}}
-{{--            <a href="{{ route('admin.users') }}" class="list-group-item list-group-item-action bg-dark text-white">Users</a>--}}
-{{--            <a href="{{ route('admin.settings') }}" class="list-group-item list-group-item-action bg-dark text-white">Settings</a>--}}
-            <a href="#" class="list-group-item list-group-item-action bg-dark text-white">Categories</a>
-            <a href="#" class="list-group-item list-group-item-action bg-dark text-white">Products</a>
+            <a href="{{ route('admin.categories') }}" class="list-group-item list-group-item-action bg-dark text-white">Categories</a>
+            <a href="{{ route('admin.products') }}" class="list-group-item list-group-item-action bg-dark text-white">Products</a>
             <a href="#" class="list-group-item list-group-item-action bg-dark text-white">Users</a>
             <a href="#" class="list-group-item list-group-item-action bg-dark text-white">Settings</a>
         </div>

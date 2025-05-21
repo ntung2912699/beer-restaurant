@@ -36,12 +36,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
         Route::get('order', [\App\Http\Controllers\Admin\OrderManagementController::class, 'index'])->name('admin.orders');
+        Route::get('products', [\App\Http\Controllers\Admin\ProductManagerController::class, 'index'])->name('admin.products');
+        Route::get('categories', [\App\Http\Controllers\Admin\CategoriesMangementController::class, 'index'])->name('admin.categories');
     });
 
     Route::prefix('api')->group(function () {
         Route::get('/orders/{id}', [\App\Http\Controllers\Admin\OrderManagementController::class, 'show'])->name('order.show');
         Route::put('/orders/{id}', [\App\Http\Controllers\Admin\OrderManagementController::class, 'update'])->name('order.update');       // Cập nhật đơn hàng
         Route::delete('/orders/{id}', [\App\Http\Controllers\Admin\OrderManagementController::class, 'destroy'])->name('order.destroy');
+
+        Route::post('/products', [\App\Http\Controllers\Admin\ProductManagerController::class, 'store'])->name('product.store');
+        Route::get('/products/{id}', [\App\Http\Controllers\Admin\ProductManagerController::class, 'show'])->name('product.show');
+        Route::put('/products/{id}', [\App\Http\Controllers\Admin\ProductManagerController::class, 'update'])->name('product.update');
+        Route::delete('/products/{id}', [\App\Http\Controllers\Admin\ProductManagerController::class, 'destroy'])->name('product.destroy');
+
+        Route::get('categories/{id}', [\App\Http\Controllers\Admin\CategoriesMangementController::class, 'show'])->name('category.show');
+        Route::post('categories', [\App\Http\Controllers\Admin\CategoriesMangementController::class, 'store'])->name('category.store');
+        Route::put('categories/{id}', [\App\Http\Controllers\Admin\CategoriesMangementController::class, 'update'])->name('category.update');
+        Route::delete('categories/{id}', [\App\Http\Controllers\Admin\CategoriesMangementController::class, 'destroy'])->name('category.destroy');
     });
 
 

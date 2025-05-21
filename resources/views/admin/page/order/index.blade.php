@@ -87,56 +87,58 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        const token = localStorage.getItem('access_token')
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-            }
-        });
-        function printReport(order_id) {
-            $.ajax({
-                url: '/orders/print-content/' + order_id,
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                },
-                success: function (html) {
-                    const printWindow = window.open('', '', 'width=600,height=800');
-                    printWindow.document.write(html);
-                    printWindow.document.close();
+    const token = localStorage.getItem('access_token');
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'Authorization': 'Bearer ' + token
+        }
+    });
 
-                    // Đợi ảnh QR (hoặc toàn bộ DOM) load xong rồi mới in
-                    printWindow.onload = function () {
-                        const qrImg = printWindow.document.querySelector('img#qr-image');
-                        if (qrImg && !qrImg.complete) {
-                            qrImg.onload = function () {
-                                printWindow.focus();
-                                printWindow.print();
-                                printWindow.close();
-                            };
-                        } else {
+    function printReport(order_id) {
+        Swal.fire({title: 'Đang tải nội dung in...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+        $.ajax({
+            url: '/orders/print-content/' + order_id,
+            method: 'GET',
+            success: function (html) {
+                Swal.close();
+                const printWindow = window.open('', '', 'width=600,height=800');
+                printWindow.document.write(html);
+                printWindow.document.close();
+
+                printWindow.onload = function () {
+                    const qrImg = printWindow.document.querySelector('img#qr-image');
+                    if (qrImg && !qrImg.complete) {
+                        qrImg.onload = function () {
                             printWindow.focus();
                             printWindow.print();
                             printWindow.close();
-                        }
-                    };
-                },
-                error: function () {
-                    Swal.fire('Lỗi', 'Không thể tạo hóa đơn để in.', 'error');
-                }
-            });
-        }
+                        };
+                    } else {
+                        printWindow.focus();
+                        printWindow.print();
+                        printWindow.close();
+                    }
+                };
+            },
+            error: function () {
+                Swal.close();
+                Swal.fire('Lỗi', 'Không thể tạo hóa đơn để in.', 'error');
+            }
+        });
+    }
 
-            function editOrder(orderId) {
-                $('#editOrderId').val(orderId);
-                $('#orderItemsContainer').html('Đang tải...');
-                const baseShowUrl = "{{ route('order.show', ['id' => '___ID___']) }}";
-                const route = baseShowUrl.replace('___ID___', orderId);
-                $.get(route, function (order) {
-                    let html = '';
-                    order.items.forEach(item => {
-                        html += `
+    function editOrder(orderId) {
+        Swal.fire({title: 'Đang tải đơn hàng...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+        $('#editOrderId').val(orderId);
+        $('#orderItemsContainer').html('Đang tải...');
+        const baseShowUrl = "{{ route('order.show', ['id' => '___ID___']) }}";
+        const route = baseShowUrl.replace('___ID___', orderId);
+
+        $.get(route, function (order) {
+            let html = '';
+            order.items.forEach(item => {
+                html += `
                 <div class="row mb-2 align-items-center order-item-row" data-product-id="${item.product_id}">
                     <div class="col-md-6">${item.product_name}</div>
                     <div class="col-md-3">
@@ -146,27 +148,31 @@
                         <button type="button" class="btn btn-danger btn-sm" onclick="removeProduct(${item.product_id})">Xóa</button>
                     </div>
                 </div>`;
-                    });
-                    $('#orderItemsContainer').html(html);
-                    $('#editOrderModal').modal('show');
-                });
-            }
+            });
+            $('#orderItemsContainer').html(html);
+            Swal.close();
+            $('#editOrderModal').modal('show');
+        }).fail(function () {
+            Swal.close();
+            Swal.fire('Lỗi', 'Không thể tải dữ liệu đơn hàng.', 'error');
+        });
+    }
 
-            function removeProduct(productId) {
-                $(`.order-item-row[data-product-id="${productId}"]`).remove();
-            }
+    function removeProduct(productId) {
+        $(`.order-item-row[data-product-id="${productId}"]`).remove();
+    }
 
-            function addNewProduct() {
-                const productId = $('#newProductSelect').val();
-                const quantity = $('#newProductQty').val();
-                const productName = $('#newProductSelect option:selected').text();
+    function addNewProduct() {
+        const productId = $('#newProductSelect').val();
+        const quantity = $('#newProductQty').val();
+        const productName = $('#newProductSelect option:selected').text();
 
-                if ($(`[data-product-id="${productId}"]`).length > 0) {
-                    alert('Món này đã tồn tại!');
-                    return;
-                }
+        if ($(`[data-product-id="${productId}"]`).length > 0) {
+            alert('Món này đã tồn tại!');
+            return;
+        }
 
-                const row = `
+        const row = `
         <div class="row mb-2 align-items-center order-item-row" data-product-id="${productId}">
             <div class="col-md-6">${productName}</div>
             <div class="col-md-3">
@@ -176,59 +182,61 @@
                 <button type="button" class="btn btn-danger btn-sm" onclick="removeProduct(${productId})">Xóa</button>
             </div>
         </div>`;
-                $('#orderItemsContainer').append(row);
+        $('#orderItemsContainer').append(row);
+    }
+
+    $('#editOrderForm').on('submit', function (e) {
+        e.preventDefault();
+        const orderId = $('#editOrderId').val();
+        const data = $(this).serialize();
+
+        const baseUpdateUrl = "{{ route('order.update', ['id' => '___ID___']) }}";
+        const route = baseUpdateUrl.replace('___ID___', orderId);
+
+        Swal.fire({title: 'Đang cập nhật...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+        $.ajax({
+            url: route,
+            type: 'PUT',
+            data: data,
+            success: function () {
+                Swal.close();
+                Swal.fire('Thành công', 'Đơn hàng đã được cập nhật!', 'success').then(() => {
+                    location.reload();
+                });
+            },
+            error: function () {
+                Swal.close();
+                Swal.fire('Lỗi', 'Cập nhật đơn hàng thất bại!', 'error');
             }
+        });
+    });
 
-            $('#editOrderForm').on('submit', function (e) {
-                e.preventDefault();
-                const orderId = $('#editOrderId').val();
-                const data = $(this).serialize();
-
-                const baseUpdateUrl = "{{ route('order.update', ['id' => '___ID___']) }}";
-                const route = baseUpdateUrl.replace('___ID___', orderId);
+    function deleteOrder(orderId) {
+        Swal.fire({
+            title: 'Bạn có chắc muốn xóa đơn hàng?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Xóa',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({title: 'Đang xóa...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+                const baseDestroyUrl = "{{ route('order.destroy', ['id' => '___ID___']) }}";
+                const route = baseDestroyUrl.replace('___ID___', orderId);
                 $.ajax({
                     url: route,
-                    type: 'PUT',
-                    data: data,
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                    },
+                    type: 'DELETE',
                     success: function () {
-                        Swal.fire('Thành công', 'Đơn hàng đã được cập nhật!', 'success').then(() => {
-                            location.reload();
-                        });
+                        Swal.close();
+                        Swal.fire('Đã xóa!', '', 'success').then(() => location.reload());
                     },
                     error: function () {
-                        Swal.fire('Lỗi', 'Cập nhật đơn hàng thất bại!', 'error');
-                    }
-                });
-            });
-
-            function deleteOrder(orderId) {
-                Swal.fire({
-                    title: 'Bạn có chắc muốn xóa đơn hàng?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Xóa',
-                    cancelButtonText: 'Hủy'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const baseDestroyUrl = "{{ route('order.destroy', ['id' => '___ID___']) }}";
-                        const route = baseDestroyUrl.replace('___ID___', orderId);
-                        $.ajax({
-                            url: route,
-                            type: 'DELETE',
-                            headers: {'Authorization': 'Bearer ' + token},
-                            success: function () {
-                                Swal.fire('Đã xóa!', '', 'success').then(() => location.reload());
-                            },
-                            error: function () {
-                                Swal.fire('Lỗi', 'Không thể xóa đơn hàng.', 'error');
-                            }
-                        });
+                        Swal.close();
+                        Swal.fire('Lỗi', 'Không thể xóa đơn hàng.', 'error');
                     }
                 });
             }
-    </script>
+        });
+    }
+</script>
 @endsection
