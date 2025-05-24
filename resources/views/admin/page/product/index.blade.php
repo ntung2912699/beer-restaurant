@@ -160,7 +160,6 @@
         $.ajaxSetup({
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                'Authorization': 'Bearer ' + token
             }
         });
 
@@ -253,6 +252,9 @@
                 url: "{{ route('product.store') }}",
                 type: 'POST',
                 data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
                 processData: false,
                 contentType: false,
                 success: function () {
@@ -271,40 +273,49 @@
             const baseShowUrl = "{{ route('product.show', ['id' => '___ID___']) }}";
             const route = baseShowUrl.replace('___ID___', productId);
 
-            $.get(route, function (product) {
-                $('#editProductId').val(product.id);
-                $('#editProductName').val(product.name);
-                $('#editProductPrice').val(product.price);
-                $('#editProductCategory').val(product.category_id);
-                $('#editProductDescription').val(product.description);
+            $.ajax({
+                url: route,
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                success: function(product) {
+                    $('#editProductId').val(product.id);
+                    $('#editProductName').val(product.name);
+                    $('#editProductPrice').val(product.price);
+                    $('#editProductCategory').val(product.category_id);
+                    $('#editProductDescription').val(product.description);
 
-                if (product.image) {
-                    const urlImg = assetBase + product.image;
-                    $('#currentImage').attr('src', urlImg);
-                    $('#currentImagePreview').show();
-                } else {
-                    $('#currentImagePreview').hide();
-                }
-
-                Swal.close();
-                $('#editProductModal').modal('show');
-                $('#editProductPrice').val(formatPriceToVND($('#editProductPrice').val()));
-                $('#editProductPrice').on('input', function() {
-                    const caretPosition = this.selectionStart;
-                    const rawValue = unformatPrice(this.value);
-                    if (rawValue === '') {
-                        $(this).val('');
-                        return;
+                    if (product.image) {
+                        const urlImg = assetBase + product.image;
+                        $('#currentImage').attr('src', urlImg);
+                        $('#currentImagePreview').show();
+                    } else {
+                        $('#currentImagePreview').hide();
                     }
-                    const formatted = formatPriceToVND(rawValue);
-                    $(this).val(formatted);
 
-                    // Cố gắng giữ caret đúng vị trí (đơn giản, có thể cần nâng cấp)
-                    this.selectionStart = this.selectionEnd = caretPosition;
-                });
-            }).fail(function () {
-                Swal.close();
-                Swal.fire('Lỗi', 'Không thể tải dữ liệu sản phẩm.', 'error');
+                    Swal.close();
+                    $('#editProductModal').modal('show');
+                    $('#editProductPrice').val(formatPriceToVND($('#editProductPrice').val()));
+
+                    $('#editProductPrice').on('input', function() {
+                        const caretPosition = this.selectionStart;
+                        const rawValue = unformatPrice(this.value);
+                        if (rawValue === '') {
+                            $(this).val('');
+                            return;
+                        }
+                        const formatted = formatPriceToVND(rawValue);
+                        $(this).val(formatted);
+
+                        // Cố gắng giữ caret đúng vị trí (đơn giản, có thể cần nâng cấp)
+                        this.selectionStart = this.selectionEnd = caretPosition;
+                    });
+                },
+                error: function() {
+                    Swal.close();
+                    Swal.fire('Lỗi', 'Không thể tải dữ liệu sản phẩm.', 'error');
+                }
             });
         }
 
@@ -324,7 +335,10 @@
                 data: formData,
                 processData: false,
                 contentType: false,
-                headers: {'X-HTTP-Method-Override': 'PUT'},
+                headers: {
+                    'X-HTTP-Method-Override': 'PUT',
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
                 success: function () {
                     Swal.close();
                     Swal.fire('Thành công', 'Sản phẩm đã được cập nhật!', 'success').then(() => location.reload());
@@ -351,6 +365,9 @@
                     $.ajax({
                         url: route,
                         type: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                        },
                         success: function () {
                             Swal.close();
                             Swal.fire('Đã xóa!', '', 'success').then(() => location.reload());

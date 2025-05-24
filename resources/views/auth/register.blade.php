@@ -171,10 +171,6 @@
                     });
                 }
             });
-
-            $('#googleLoginBtn').click(function() {
-                window.location.href = '{{ route("auth.google.redirect") }}';
-            });
         });
 
         function validateEmail(email) {

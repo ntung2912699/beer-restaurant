@@ -134,16 +134,29 @@
 
         function editCategory(id) {
             const route = "{{ route('category.show', ['id' => '___ID___']) }}".replace('___ID___', id);
-            Swal.fire({title: 'Đang tải...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
-            $.get(route, function (data) {
-                $('#editCategoryId').val(data.id);
-                $('#editCategoryName').val(data.name);
-                $('#editCategoryIcon').val(data.icon);
-                $('#editCategoryDescription').val(data.description);
-                Swal.close();
-                $('#editCategoryModal').modal('show');
-            }).fail(() => {
-                Swal.fire('Lỗi', 'Không thể tải dữ liệu.', 'error');
+            Swal.fire({
+                title: 'Đang tải...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            $.ajax({
+                url: route,
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                success: function(data) {
+                    $('#editCategoryId').val(data.id);
+                    $('#editCategoryName').val(data.name);
+                    $('#editCategoryIcon').val(data.icon);
+                    $('#editCategoryDescription').val(data.description);
+                    Swal.close();
+                    $('#editCategoryModal').modal('show');
+                },
+                error: function() {
+                    Swal.fire('Lỗi', 'Không thể tải dữ liệu.', 'error');
+                }
             });
         }
 
@@ -158,7 +171,10 @@
                 url: route,
                 type: 'POST',
                 data: formData,
-                headers: {'X-HTTP-Method-Override': 'PUT'},
+                headers: {
+                    'X-HTTP-Method-Override': 'PUT',
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
                 success: () => {
                     Swal.fire('Thành công', 'Danh mục đã được cập nhật!', 'success').then(() => location.reload());
                 },
@@ -182,6 +198,9 @@
                     $.ajax({
                         url: route,
                         type: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                        },
                         success: () => {
                             Swal.fire('Đã xóa!', '', 'success').then(() => location.reload());
                         },

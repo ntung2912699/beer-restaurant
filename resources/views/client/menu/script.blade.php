@@ -5,8 +5,7 @@
 
     $.ajaxSetup({
         headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     });
 
@@ -45,7 +44,7 @@
                     categoryId: categoryId
                 },
                 headers: {
-                    'Authorization': 'Bearer ' + token
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
                 },
                 success: function(response) {
                     if (response && response.length > 0) {
@@ -77,7 +76,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Lỗi',
-                        text: error,
+                        text: xhr.responseJSON?.message || error,
                         toast: true,
                         position: 'top-end',
                         showConfirmButton: false,
@@ -100,7 +99,7 @@
                 url: `/api/cart/${tableIdInit}`,
                 method: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + token
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
                 },
                 success: function (data) {
                     const cart = [];
@@ -131,11 +130,12 @@
                     }
                     updateCartUI();
                 },
-                error: function (tableIdInit) {
+                error: function (xhr, tableIdInit) {
+                    localStorage.removeItem('cart');
                     Swal.fire({
                         icon: 'error',
                         title: 'Lỗi',
-                        text: `Không thể tải giỏ hàng bàn ${tableIdInit}.`,
+                        text: xhr.responseJSON?.message || `Không thể tải giỏ hàng bàn ${tableIdInit}.`,
                         toast: true,
                         position: 'top-end',
                         showConfirmButton: false,
@@ -153,7 +153,7 @@
                 url: `/api/cart/${tableId}`,
                 method: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + token
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
                 },
                 success: function (data) {
                     const cart = [];
@@ -172,11 +172,12 @@
                     saveCartToLocalStorage(cart);
                     updateCartUI();
                 },
-                error: function () {
+                error: function (xhr) {
+                    localStorage.removeItem('cart');
                     Swal.fire({
                         icon: 'error',
                         title: 'Lỗi',
-                        text: `Không thể tải giỏ hàng bàn ${tableId}.`,
+                        text: xhr.responseJSON?.message || `Không thể tải giỏ hàng bàn ${tableId}.`,
                         toast: true,
                         position: 'top-end',
                         showConfirmButton: false,
@@ -211,7 +212,7 @@
                     contentType: 'application/json',
                     data: JSON.stringify(payload),
                     headers: {
-                        'Authorization': 'Bearer ' + token
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
                     },
                     success: async function (response) {
                         Swal.fire({
@@ -232,11 +233,11 @@
                         await fetchCartByTableId(newTableId);
                         previousTableId = newTableId;
                     },
-                    error: function () {
+                    error: function (xhr) {
                         Swal.fire({
                             icon: 'error',
                             title: 'Lỗi',
-                            text: `Lỗi khi lưu giỏ hàng bàn ${previousTableId}.`,
+                            text: xhr.responseJSON?.message || `Lỗi khi lưu giỏ hàng bàn ${previousTableId}.`,
                             toast: true,
                             position: 'top-end',
                             showConfirmButton: false,
@@ -257,7 +258,7 @@
                 url: `/api/cart/${tableId}`,
                 method: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + token
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
                 },
                 success: function (data) {
                     const cart = [];
@@ -291,11 +292,12 @@
                     }
                     updateCartUI();
                 },
-                error: function () {
+                error: function (xhr) {
+                    localStorage.removeItem('cart');
                     Swal.fire({
                         icon: 'error',
                         title: 'Lỗi',
-                        text: `Không thể tải giỏ hàng bàn ${tableId}.`,
+                        text: xhr.responseJSON?.message || `Không thể tải giỏ hàng bàn ${tableId}.`,
                         toast: true,
                         position: 'top-end',
                         showConfirmButton: false,
@@ -427,7 +429,7 @@
             contentType: 'application/json',
             data: JSON.stringify(payload),
             headers: {
-                'Authorization': 'Bearer ' + token
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
             },
             success: function (response) {
                 // Xóa giỏ hàng localStorage sau khi thanh toán
@@ -456,7 +458,7 @@
                             url: `/orders/print-content/${response.order_id}`,
                             method: 'GET',
                             headers: {
-                                'Authorization': 'Bearer ' + token
+                                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
                             },
                             success: function (html) {
                                 Swal.close(); // ✅ Đóng loading sau khi nhận HTML
@@ -498,6 +500,10 @@
         });
     });
 
+    function logout() {
+        localStorage.removeItem('access_token')
+        window.location.href = '{{ route("login") }}';
+    }
 </script>
 
 

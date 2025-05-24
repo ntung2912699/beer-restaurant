@@ -103,6 +103,9 @@
         $.ajax({
             url: '/orders/print-content/' + order_id,
             method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+            },
             success: function (html) {
                 Swal.close();
                 const printWindow = window.open('', '', 'width=600,height=800');
@@ -138,26 +141,34 @@
         const baseShowUrl = "{{ route('order.show', ['id' => '___ID___']) }}";
         const route = baseShowUrl.replace('___ID___', orderId);
 
-        $.get(route, function (order) {
-            let html = '';
-            order.items.forEach(item => {
-                html += `
-                <div class="row mb-2 align-items-center order-item-row" data-product-id="${item.product_id}">
-                    <div class="col-md-6">${item.product_name}</div>
-                    <div class="col-md-3">
-                        <input type="number" name="quantities[${item.product_id}]" class="form-control" value="${item.quantity}" min="1" />
-                    </div>
-                    <div class="col-md-3">
-                        <button type="button" class="btn btn-danger btn-sm" onclick="removeProduct(${item.product_id})">Xóa</button>
-                    </div>
-                </div>`;
-            });
-            $('#orderItemsContainer').html(html);
-            Swal.close();
-            $('#editOrderModal').modal('show');
-        }).fail(function () {
-            Swal.close();
-            Swal.fire('Lỗi', 'Không thể tải dữ liệu đơn hàng.', 'error');
+        $.ajax({
+            url: route,
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+            },
+            success: function(order) {
+                let html = '';
+                order.items.forEach(item => {
+                    html += `
+            <div class="row mb-2 align-items-center order-item-row" data-product-id="${item.product_id}">
+                <div class="col-md-6">${item.product_name}</div>
+                <div class="col-md-3">
+                    <input type="number" name="quantities[${item.product_id}]" class="form-control" value="${item.quantity}" min="1" />
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeProduct(${item.product_id})">Xóa</button>
+                </div>
+            </div>`;
+                });
+                $('#orderItemsContainer').html(html);
+                Swal.close();
+                $('#editOrderModal').modal('show');
+            },
+            error: function() {
+                Swal.close();
+                Swal.fire('Lỗi', 'Không thể tải dữ liệu đơn hàng.', 'error');
+            }
         });
     }
 
@@ -201,6 +212,9 @@
             url: route,
             type: 'PUT',
             data: data,
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+            },
             success: function () {
                 Swal.close();
                 Swal.fire('Thành công', 'Đơn hàng đã được cập nhật!', 'success').then(() => {
@@ -229,6 +243,9 @@
                 $.ajax({
                     url: route,
                     type: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    },
                     success: function () {
                         Swal.close();
                         Swal.fire('Đã xóa!', '', 'success').then(() => location.reload());

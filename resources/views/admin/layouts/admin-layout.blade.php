@@ -47,7 +47,7 @@
     <div id="page-content-wrapper" class="w-100">
         <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
             <div class="container-fluid">
-                <a class="" id="menu-toggle"></a>
+                <a href="{{ route('menu') }}" class="btn btn-outline-dark">Trang Menu</a>
                 @if(auth()->user())
                     <span class="navbar-brand ms-3">
                         {{ auth()->user()->roles }} - {{ auth()->user()->name }}

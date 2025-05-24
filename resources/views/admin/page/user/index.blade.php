@@ -32,7 +32,7 @@
                     </div>
                 </td>
                 <td>
-                    @if($user->roles === "ADMIN") {{-- Giả sử cột is_approved --}}
+                    @if($user->roles === "admin") {{-- Giả sử cột is_approved --}}
                         <span class="badge bg-dark text-white">{{ $user->roles }}</span>
                     @else
                         <span class="badge bg-primary text-white">{{ $user->roles }}</span>
@@ -120,15 +120,23 @@
         function editUser(id) {
             const route = "{{ route('user.show', ['id' => '___ID___']) }}".replace('___ID___', id);
             Swal.fire({title: 'Đang tải...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
-            $.get(route, function (data) {
-                $('#editUserId').val(data.id);
-                $('#editUserName').val(data.name);
-                $('#editUserEmail').val(data.email);
-                $('#editUserPassword').val(''); // Không fill password
-                Swal.close();
-                $('#editUserModal').modal('show');
-            }).fail(() => {
-                Swal.fire('Lỗi', 'Không thể tải dữ liệu.', 'error');
+            $.ajax({
+                url: route,
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                success: function(data) {
+                    $('#editUserId').val(data.id);
+                    $('#editUserName').val(data.name);
+                    $('#editUserEmail').val(data.email);
+                    $('#editUserPassword').val(''); // Không fill password
+                    Swal.close();
+                    $('#editUserModal').modal('show');
+                },
+                error: function() {
+                    Swal.fire('Lỗi', 'Không thể tải dữ liệu.', 'error');
+                }
             });
         }
 
@@ -143,7 +151,10 @@
                 url: route,
                 type: 'POST',
                 data: formData,
-                headers: {'X-HTTP-Method-Override': 'PUT'},
+                headers: {
+                    'X-HTTP-Method-Override': 'PUT',
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
                 success: () => {
                     Swal.fire('Thành công', 'Người dùng đã được cập nhật!', 'success').then(() => location.reload());
                 },
@@ -167,6 +178,9 @@
                     $.ajax({
                         url: route,
                         type: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                        },
                         success: () => {
                             Swal.fire('Đã xóa!', '', 'success').then(() => location.reload());
                         },
@@ -198,7 +212,10 @@
                     $.ajax({
                         url: route,
                         type: 'POST',
-                        headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                        },
                         success: function() {
                             Swal.fire('Thành công', 'Người dùng đã được duyệt.', 'success');
                             // Cập nhật UI: ẩn nút Duyệt, thay đổi trạng thái
