@@ -433,6 +433,7 @@
                 // Xóa giỏ hàng localStorage sau khi thanh toán
                 localStorage.removeItem('cart');
                 updateCartUI();  // Cập nhật lại giao diện giỏ hàng
+
                 Swal.fire({
                     icon: 'success',
                     title: 'Thanh toán hoàn tất!',
@@ -440,6 +441,16 @@
                     confirmButtonText: 'In hóa đơn',
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        // 👉 Hiển thị loading khi bắt đầu in
+                        Swal.fire({
+                            title: 'Đang tạo hóa đơn...',
+                            html: 'Vui lòng chờ trong giây lát',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
                         // Gọi API để lấy HTML hóa đơn và in
                         $.ajax({
                             url: `/orders/print-content/${response.order_id}`,
@@ -448,11 +459,12 @@
                                 'Authorization': 'Bearer ' + token
                             },
                             success: function (html) {
+                                Swal.close(); // ✅ Đóng loading sau khi nhận HTML
+
                                 const printWindow = window.open('', '', 'width=600,height=800');
                                 printWindow.document.write(html);
                                 printWindow.document.close();
 
-                                // Đợi ảnh QR (hoặc toàn bộ DOM) load xong rồi mới in
                                 printWindow.onload = function () {
                                     const qrImg = printWindow.document.querySelector('img#qr-image');
                                     if (qrImg && !qrImg.complete) {
@@ -469,6 +481,7 @@
                                 };
                             },
                             error: function () {
+                                Swal.close(); // ✅ Đóng loading nếu lỗi
                                 Swal.fire('Lỗi', 'Không thể tạo hóa đơn để in.', 'error');
                             }
                         });

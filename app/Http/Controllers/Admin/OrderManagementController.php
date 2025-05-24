@@ -27,10 +27,9 @@ class OrderManagementController extends Controller
         $this->productRepo = $productRepo;
     }
 
-    // Hiển thị danh sách đơn hàng
     public function index(Request $request)
     {
-        $orders = $this->orderRepo->all();
+        $orders = $this->orderRepo->paginate(10); // Mỗi trang hiển thị 10 đơn hàng
         $products = $this->productRepo->all();
         return view('admin.page.order.index', compact('orders', 'products'));
     }

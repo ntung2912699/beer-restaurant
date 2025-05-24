@@ -25,7 +25,7 @@ class ProductManagerController extends Controller
 
     public function index()
     {
-        $products = $this->productRepo->all();
+        $products = $this->productRepo->paginate(8);
         $categories = $this->categoryRepo->all();
         return view('admin.page.product.index', compact('products', 'categories'));
     }

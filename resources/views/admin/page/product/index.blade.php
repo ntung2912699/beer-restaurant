@@ -46,6 +46,9 @@
             @endforelse
             </tbody>
         </table>
+        <div class="mt-3">
+            {{ $products->links('pagination::bootstrap-5') }}
+        </div>
     </div>
 
     <!-- Modal Thêm sản phẩm -->

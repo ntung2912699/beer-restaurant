@@ -45,4 +45,9 @@ class ProductRepository implements ProductRepositoryInterface
     {
         return $this->model->where('name', 'LIKE', '%' . $key . '%')->get();
     }
+
+    public function paginate($perPage = 10)
+    {
+        return Product::latest()->paginate($perPage);
+    }
 }

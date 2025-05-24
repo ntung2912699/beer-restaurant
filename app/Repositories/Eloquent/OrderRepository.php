@@ -47,5 +47,11 @@ class OrderRepository implements OrderRepositoryInterface
             ->orderByDesc('created_at')
             ->get();
     }
+
+    public function paginate($perPage = 10)
+    {
+        return Order::latest()->paginate($perPage);
+    }
+
 }
 

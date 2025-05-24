@@ -44,6 +44,9 @@
             @endforelse
             </tbody>
         </table>
+        <div class="mt-3">
+            {{ $orders->links('pagination::bootstrap-5') }}
+        </div>
     </div>
     <!-- Modal chỉnh sửa đơn hàng -->
     <div class="modal fade" id="editOrderModal" tabindex="-1" aria-labelledby="editOrderModalLabel" aria-hidden="true">

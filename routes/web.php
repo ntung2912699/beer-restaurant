@@ -15,7 +15,9 @@ Route::prefix('api')->group(function () {
     Route::get('google/redirect', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
     Route::get('google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
-    Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+    Route::post('/register/request', [AuthController::class, 'registerRequest'])->name('register.request');
+    Route::post('/register/verify', [AuthController::class, 'verifyOtp'])->name('register.verify');
+
 })->middleware('api');
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/', [IndexController::class, 'index'])->name('menu');
@@ -38,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('order', [\App\Http\Controllers\Admin\OrderManagementController::class, 'index'])->name('admin.orders');
         Route::get('products', [\App\Http\Controllers\Admin\ProductManagerController::class, 'index'])->name('admin.products');
         Route::get('categories', [\App\Http\Controllers\Admin\CategoriesMangementController::class, 'index'])->name('admin.categories');
+        Route::get('users', [\App\Http\Controllers\Admin\UserManagementController::class, 'index'])->name('admin.users');
     });
 
     Route::prefix('api')->group(function () {
@@ -54,8 +57,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('categories', [\App\Http\Controllers\Admin\CategoriesMangementController::class, 'store'])->name('category.store');
         Route::put('categories/{id}', [\App\Http\Controllers\Admin\CategoriesMangementController::class, 'update'])->name('category.update');
         Route::delete('categories/{id}', [\App\Http\Controllers\Admin\CategoriesMangementController::class, 'destroy'])->name('category.destroy');
+
+        Route::get('/users/{id}', [\App\Http\Controllers\Admin\UserManagementController::class, 'show'])->name('user.show');
+        Route::put('/users/{id}', [\App\Http\Controllers\Admin\UserManagementController::class, 'update'])->name('user.update');
+        Route::delete('/users/{id}', [\App\Http\Controllers\Admin\UserManagementController::class, 'destroy'])->name('user.destroy');
+        Route::post('/users/{id}/approve', [\App\Http\Controllers\Admin\UserManagementController::class, 'approveUser'])->name('user.approve');
     });
-
-
 });
 

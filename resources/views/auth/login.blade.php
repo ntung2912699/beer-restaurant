@@ -11,14 +11,16 @@
                 <input type="email" class="form-control" id="email" name="email">
                 <div class="text-danger" id="emailError"></div>
             </div>
-            <div class="mb-3">
+            <div class="mb-3 position-relative">
                 <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-control" id="password" name="password">
+                <div class="input-group">
+                    <input type="password" class="form-control" id="password" name="password">
+                    <button class="btn btn-outline-secondary" type="button" id="togglePassword" tabindex="-1">👁️</button>
+                </div>
                 <div class="text-danger" id="passwordError"></div>
             </div>
             <button type="submit" class="btn btn-primary">Login</button>
-            <!-- Google Login Button -->
-            <button id="googleLoginBtn" class="btn btn-danger mt-3">Login with Google</button>
+            <a href="{{ route('register') }}" id="register-page" class="btn btn-danger mt-3">Đăng Ký</a>
         </form>
     </div>
 
@@ -28,38 +30,50 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
+            $('#togglePassword').on('click', function () {
+                const passwordInput = $('#password');
+                const type = passwordInput.attr('type') === 'password' ? 'text' : 'password';
+                passwordInput.attr('type', type);
+                $(this).text(type === 'password' ? '👁️' : '🙈');
+            });
+
             $('#loginForm').submit(function(e) {
                 e.preventDefault();
-                $('.text-danger').text(''); // Xóa thông báo lỗi trước khi validate lại
-                $('input').removeClass('is-invalid'); // Xóa lớp is-invalid trên các input
+                $('.text-danger').text('');
+                $('input').removeClass('is-invalid');
 
-                // Validate form fields
                 var isValid = true;
                 var email = $('#email').val();
                 var password = $('#password').val();
 
-                // Kiểm tra email hợp lệ
                 if (!email || !validateEmail(email)) {
                     $('#emailError').text('Vui lòng nhập email hợp lệ.');
-                    $('#email').addClass('is-invalid'); // Thêm lớp is-invalid cho input
+                    $('#email').addClass('is-invalid');
                     isValid = false;
                 }
 
-                // Kiểm tra password không rỗng
                 if (!password) {
                     $('#passwordError').text('Vui lòng nhập mật khẩu.');
-                    $('#password').addClass('is-invalid'); // Thêm lớp is-invalid cho input
+                    $('#password').addClass('is-invalid');
                     isValid = false;
                 }
 
-                // Nếu form hợp lệ, gửi AJAX request
                 if (isValid) {
+                    // Bắt đầu loading
+                    Swal.fire({
+                        title: 'Đang đăng nhập...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
                     $.ajax({
                         url: '{{ route("login.submit") }}',
                         method: 'POST',
                         data: $(this).serialize(),
                         success: function(response) {
-                            // Lưu token vào localStorage
+                            Swal.close(); // Tắt loading
                             localStorage.setItem('access_token', response.access_token);
 
                             Swal.fire({
@@ -76,6 +90,8 @@
                             });
                         },
                         error: function(response) {
+                            Swal.close(); // Tắt loading
+
                             if (response.status == 401) {
                                 Swal.fire({
                                     icon: 'error',
@@ -84,7 +100,18 @@
                                     toast: true,
                                     position: 'top-end',
                                     showConfirmButton: false,
-                                    timer: 1500,
+                                    timer: 2500,
+                                    timerProgressBar: true
+                                });
+                            } else if (response.status == 403) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Chưa được phê duyệt',
+                                    text: response.responseJSON.message || 'Tài khoản chưa được quản trị viên phê duyệt.',
+                                    toast: true,
+                                    position: 'top-end',
+                                    showConfirmButton: false,
+                                    timer: 2500,
                                     timerProgressBar: true
                                 });
                             } else {
@@ -95,7 +122,7 @@
                                     toast: true,
                                     position: 'top-end',
                                     showConfirmButton: false,
-                                    timer: 1500,
+                                    timer: 2500,
                                     timerProgressBar: true
                                 });
                             }
@@ -104,14 +131,11 @@
                 }
             });
 
-            // Google Login - API Call
             $('#googleLoginBtn').click(function() {
                 window.location.href = '{{ route("auth.google.redirect") }}';
             });
-
         });
 
-        // Hàm kiểm tra định dạng email hợp lệ
         function validateEmail(email) {
             var re = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
             return re.test(email);
